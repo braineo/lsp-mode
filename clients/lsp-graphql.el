@@ -42,13 +42,26 @@
   :risky t
   :group 'lsp-graphql)
 
+(defcustom lsp-clients-graphql-enable-embed nil
+  "Whether enable for embed gql tag in non graphql files like JavaScript.
+If not, only enabled when major mode is graphql-mode."
+  :type 'boolean
+  :group 'lsp-graphql)
+
+(defcustom lsp-clients-graphql-embed-extentions '("ts" "js" "jsx" "tsx" "vue")
+  "Extra file extensions for enabling lsp-graphql.
+If `lsp-clients-graphql-enable-embed' is t, enable lsp-graphql in these files."
+  :type '(repeat string)
+  :group 'lsp-graphql)
+
 (defun lsp-graphql-activate-p (filename &optional _)
   "Check if the GraphQL language server should be enabled based on FILENAME."
-  (or (string-match-p (rx (one-or-more anything) "."
-                        (or "ts" "js" "jsx" "tsx" "vue" "graphql" "gql")eos)
-        filename)
-    (and (derived-mode-p 'js-mode 'js2-mode 'typescript-mode)
-      (not (derived-mode-p 'json-mode)))))
+  (when lsp-clients-graphql-enable-embed
+    (or (string-match-p (rx-to-string `(seq (one-or-more anything) "."
+                                         (or ,@lsp-clients-graphql-embed-extentions) eos))
+          filename)
+      (and (derived-mode-p 'js-mode 'js2-mode 'typescript-mode)
+        (not (derived-mode-p 'json-mode))))))
 
 (lsp-register-client
   (make-lsp-client :new-connection (lsp-stdio-connection (lambda()
